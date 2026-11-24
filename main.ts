@@ -3,10 +3,11 @@
 // The entry itself is a short vertical video ad for make.fun, posted
 // publicly on TikTok. This program only hands the video's address to
 // the grader: it reads VIDEO.json from the repository root, checks it
-// names a TikTok video, and writes it out byte for byte to the output
-// directory, where the gate reads it. Nothing this program writes
-// about the video is scored: the house reads the video itself from
-// TikTok and ranks the entry by its views.
+// names a TikTok video URL of the form
+// https://www.tiktok.com/@<handle>/video/<digits>, and writes it out
+// byte for byte to the output directory, where the gate reads it.
+// Nothing this program writes about the video is scored: the house
+// reads the video itself from TikTok and ranks the entry by its views.
 //
 // Run it the way the grader does:
 //   mkdir -p out && MAKEFUN_BOT_DIR=. MAKEFUN_OUTPUT_DIR=out node main.ts
@@ -28,13 +29,18 @@ try {
 } catch {
   url = null;
 }
+// The path must be a TikTok video address: /@<handle>/video/<digits>.
+// The handle is one non-empty, slash-free segment; the video id is
+// digits only, so profile pages, search pages, and truncated or
+// mistyped links are rejected here instead of reaching the grader.
+const videoPath = /^\/@[^/]+\/video\/\d+$/;
 if (
   typeof parsed !== 'object' ||
   parsed === null ||
   url === null ||
   url.protocol !== 'https:' ||
   url.hostname !== 'www.tiktok.com' ||
-  !url.pathname.startsWith('/@')
+  !videoPath.test(url.pathname)
 ) {
   console.error(`VIDEO.json in ${BOT_DIR} does not name a TikTok video URL.`);
   process.exit(1);
